@@ -31,6 +31,7 @@ local packages = {
   "lua-language-server",
   -- Formatters
   "prettierd",
+  "oxfmt",
   "clang-format",
   "stylua",
   -- Debug adapters

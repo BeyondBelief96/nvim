@@ -300,7 +300,12 @@ return {
           -- Config
           "lua_ls",
         },
-        automatic_enable = true,
+        -- oxfmt is installed as a *formatter* (conform runs its CLI -- see
+        -- lua/plugins/formatting.lua), not as a language server. mason-lspconfig
+        -- would otherwise auto-enable it just because the package is present,
+        -- and like oxlint it declares no workspace_required, so it would attach
+        -- to every JS/TS buffer even in projects with no oxfmt config.
+        automatic_enable = { exclude = { "oxfmt" } },
       })
 
       -- Non-LSP tooling: formatters and debug adapters.

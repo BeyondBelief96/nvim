@@ -187,8 +187,9 @@ Leader is **Space**. Press `<Space>` and pause — which-key lists everything.
 | CMake | `neocmake` | |
 | Lua | `lua_ls` + `lazydev` | Knows the Neovim API when editing this config |
 
-Formatters: `prettierd` (web), `clang-format` (C/C++), `stylua` (Lua).
-All installed by mason; `:Mason` to browse or add more.
+Formatters: `prettierd` (web), `oxfmt` (web, opt-in per project — see below),
+`clang-format` (C/C++), `stylua` (Lua). All installed by mason; `:Mason` to
+browse or add more.
 
 ### oxlint vs ESLint
 
@@ -221,6 +222,27 @@ upstream, so they're reported but never auto-applied. Run `oxlint
 `settings` block in `lua/plugins/lsp.lua` to change this.
 
 oxlint uses *pull* diagnostics, so its messages show `source = oxc`.
+
+### oxfmt vs Prettier
+
+Same idea on the formatting side, and also opt-in per project:
+
+| Project has | Formatter used |
+|---|---|
+| `.oxfmtrc.json`, `.oxfmtrc.jsonc`, or `oxfmt.config.ts` | `oxfmt` |
+| anything else | `prettierd`, falling back to `prettier` |
+
+Detection walks upward from the current file, so a monorepo can mix the two
+across packages. Nothing changes for projects that have never heard of oxc.
+
+oxfmt is wired up as a **conform formatter only, not a language server.**
+mason-lspconfig would otherwise auto-enable it just because the package is
+installed, and it declares no `workspace_required` — so it would attach to
+every JS/TS buffer even with no oxfmt config. It's excluded from
+`automatic_enable` in `lua/plugins/lsp.lua` for that reason.
+
+To switch a project over, drop an `.oxfmtrc.json` at its root — `{}` is enough
+to opt in with oxc's defaults.
 
 ### Getting clangd to work
 
