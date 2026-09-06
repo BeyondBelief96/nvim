@@ -10,6 +10,8 @@
 
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 NVM_VERSION="v0.40.3"
 NERD_FONT="JetBrainsMono"
 
@@ -193,7 +195,7 @@ ok "Plugins installed"
 
 step "Installing language servers and formatters (mason)"
 # mason installs asynchronously, so this runs a script that blocks until done.
-nvim --headless -l "$(dirname "$0")/scripts/install-tools.lua" || warn "Some mason packages failed -- run :Mason to retry"
+nvim --headless -c "luafile ${SCRIPT_DIR}/scripts/install-tools.lua" || warn "Some mason packages failed -- run :Mason to retry"
 ok "Mason step complete"
 
 step "Installing Treesitter parsers"

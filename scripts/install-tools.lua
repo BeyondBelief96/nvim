@@ -1,6 +1,9 @@
 -- Headless installer for every mason package this config expects.
 --
--- Run with:  nvim --headless -l ~/.config/nvim/scripts/install-tools.lua
+-- Run with:  nvim --headless -c 'luafile ~/.config/nvim/scripts/install-tools.lua'
+--
+-- Note: `-l` does NOT work here. It executes the script before the user config
+-- loads, so lazy.nvim's module loader isn't installed and require("mason") fails.
 --
 -- mason installs asynchronously, so a plain `nvim --headless +MasonInstall +qa`
 -- exits before anything finishes. This drives the registry directly and blocks

@@ -137,13 +137,9 @@ return {
         dap.configurations[ft] = js_config
       end
 
-      -- Also read a project's .vscode/launch.json if it has one.
-      pcall(function()
-        require("dap.ext.vscode").load_launchjs(nil, {
-          ["pwa-node"] = { "javascript", "typescript", "javascriptreact", "typescriptreact" },
-          codelldb = { "c", "cpp" },
-        })
-      end)
+      -- .vscode/launch.json is picked up automatically by nvim-dap on demand,
+      -- so an explicit load_launchjs() call is no longer needed (and is
+      -- deprecated). Configurations from it appear alongside the ones above.
     end,
   },
 }
