@@ -91,20 +91,33 @@ return {
     opts = { indent = { char = "│" }, scope = { enabled = false } },
   },
 
-  -- Integrated terminal. <C-\> toggles a floating shell; <leader>tg opens
-  -- lazygit if you have it installed.
+  -- Integrated terminal.
+  --   <C-\>       toggle a floating shell (works from inside the terminal too)
+  --   <leader>tt  terminal in a horizontal split
+  --   <leader>tv  terminal in a vertical split
+  --   <Esc><Esc>  leave terminal-insert mode (mapped in core/keymaps.lua)
+  --
+  -- Note: the keys below deliberately carry an explicit command rather than
+  -- using toggleterm's `open_mapping`. lazy.nvim creates a stub mapping for
+  -- each lazy-load key and deletes it once the plugin loads -- which also
+  -- deletes the identical mapping toggleterm sets for itself, leaving <C-\>
+  -- bound to nothing. Defining it here keeps a single owner for the key.
   {
     "akinsho/toggleterm.nvim",
     version = "*",
     keys = {
-      { [[<C-\>]], desc = "Toggle terminal" },
+      { [[<C-\>]], "<cmd>ToggleTerm<cr>", mode = { "n", "t" }, desc = "Toggle terminal" },
       { "<leader>tt", "<cmd>ToggleTerm direction=horizontal<cr>", desc = "Terminal (split)" },
+      { "<leader>tv", "<cmd>ToggleTerm direction=vertical size=80<cr>", desc = "Terminal (vsplit)" },
     },
     opts = {
-      open_mapping = [[<C-\>]],
       direction = "float",
       float_opts = { border = "rounded" },
       shade_terminals = true,
+      start_in_insert = true,
+      -- Open in the directory of the current file's project, not wherever
+      -- Neovim happened to start.
+      dir = "git_dir",
     },
   },
 }

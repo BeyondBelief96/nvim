@@ -182,10 +182,71 @@ install_font() {
 }
 install_font
 
+# Under WSL the terminal emulator is a Windows application, so it renders
+# glyphs from Windows-installed fonts. Installing into ~/.local/share/fonts
+# does nothing for it -- the font has to go onto the Windows side too.
+install_font_windows() {
+  local win_user win_dir ps1
+  win_user="$(powershell.exe -NoProfile -Command '$env:USERNAME' 2>/dev/null | tr -d '\r')"
+  if [ -z "$win_user" ]; then
+    warn "Could not reach powershell.exe -- install the font on Windows manually"
+    return
+  fi
+  win_dir="/mnt/c/Users/${win_user}/Downloads/NerdFonts"
+  mkdir -p "$win_dir"
+  # The plain family (ligatures, standard spacing) is the one you want in a
+  # terminal; the Mono/Propo/NL files are alternate spacing variants.
+  cp "$HOME/.local/share/fonts/${NERD_FONT}NerdFont-"{Regular,Bold,Italic,BoldItalic}.ttf \
+     "$win_dir/" 2>/dev/null || {
+    warn "Expected font files not found -- skipping the Windows install"
+    return
+  }
+
+  ps1="$win_dir/install-fonts.ps1"
+  # Per-user font install: copy into %LOCALAPPDATA%\Microsoft\Windows\Fonts and
+  # add an HKCU registry entry. Works without administrator rights.
+  cat > "$ps1" <<'PSEOF'
+$src  = "$env:USERPROFILE\Downloads\NerdFonts"
+$dest = "$env:LOCALAPPDATA\Microsoft\Windows\Fonts"
+$reg  = "HKCU:\Software\Microsoft\Windows NT\CurrentVersion\Fonts"
+New-Item -ItemType Directory -Force -Path $dest | Out-Null
+Add-Type -AssemblyName System.Drawing
+foreach ($f in Get-ChildItem "$src\*.ttf") {
+  $target = Join-Path $dest $f.Name
+  Copy-Item $f.FullName $target -Force
+  $fc = New-Object System.Drawing.Text.PrivateFontCollection
+  $fc.AddFontFile($target)
+  $family = $fc.Families[0].Name
+  $style  = ($f.BaseName -split "-")[-1]
+  if ($style -eq "Regular") {
+    $key = "$family (TrueType)"
+  } else {
+    # Single quotes on the replacement: in a double-quoted string PowerShell
+    # would expand $1 as a variable instead of a regex backreference.
+    $pretty = $style -creplace '(?<!^)([A-Z])', ' $1'
+    $key = "$family $pretty (TrueType)"
+  }
+  New-ItemProperty -Path $reg -Name $key -PropertyType String -Value $target -Force | Out-Null
+  Write-Output "  registered: $key"
+}
+Write-Output ""
+Write-Output "  Font family name: $family"
+PSEOF
+
+  if powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$(wslpath -w "$ps1")" 2>&1 | tr -d '\r'; then
+    ok "Font installed on the Windows side"
+  else
+    warn "Windows font install failed -- open $win_dir in Explorer,"
+    warn "select the .ttf files, right-click and choose Install"
+  fi
+}
+
 if [ "$IS_WSL" = 1 ]; then
-  warn "WSL: fonts must also be installed on the WINDOWS side and selected in"
-  warn "your terminal (Windows Terminal > Settings > Profile > Appearance > Font),"
-  warn "otherwise icons render as boxes."
+  step "Installing the font on the Windows side (WSL)"
+  install_font_windows
+  warn "Now select the font in your terminal:"
+  warn "  Windows Terminal > Settings > your profile > Appearance > Font face"
+  warn "  Choose 'JetBrainsMono NF'. Icons stay as boxes until you do."
 fi
 
 # --- Sync plugins and language servers --------------------------------------

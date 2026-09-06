@@ -23,9 +23,16 @@ toolchain, cmake, ripgrep, fd, clang), a recent Neovim if yours is too old,
 Node via `nvm`, a JetBrainsMono Nerd Font, then syncs all plugins and language
 servers headlessly. It will ask for `sudo` once for the package manager step.
 
-Afterwards, set your terminal font to **JetBrainsMono Nerd Font** or the icons
-render as boxes. On WSL the font must be installed on the *Windows* side too —
-Windows Terminal → Settings → your profile → Appearance → Font face.
+Afterwards, **set your terminal font** or the icons render as boxes. The font
+installs as family name **`JetBrainsMono NF`** — that's what to look for in the
+font picker, not "JetBrainsMono Nerd Font".
+
+On WSL this matters more than it looks: your terminal is a Windows application,
+so it renders glyphs from *Windows*-installed fonts. Installing into
+`~/.local/share/fonts` does nothing for it. `bootstrap.sh` handles both sides
+automatically, but you still have to pick the font yourself:
+Windows Terminal → Settings → your profile → Appearance → Font face →
+`JetBrainsMono NF`.
 
 Then open `nvim` and run `:checkhealth`.
 
@@ -160,7 +167,9 @@ Leader is **Space**. Press `<Space>` and pause — which-key lists everything.
 `<C-space>` grows a treesitter selection, `<BS>` shrinks it.
 `af`/`if`, `ac`/`ic`, `aa`/`ia` select a function, class, or argument.
 `]f`/`[f` jump between functions. `cs"'`, `ysiw"`, `ds(` for surround.
-`<C-\>` toggles a floating terminal.
+`<C-\>` toggles a floating terminal (works from inside the terminal too),
+`<leader>tt` opens one in a horizontal split, `<leader>tv` in a vertical split.
+`<Esc><Esc>` leaves terminal-insert mode.
 
 ---
 
@@ -212,7 +221,7 @@ on every `#include`. Pick one:
 
 | Symptom | Fix |
 |---|---|
-| Boxes instead of icons | Terminal font isn't a Nerd Font. On WSL, install it on Windows too. |
+| Boxes instead of icons | Terminal font isn't set to `JetBrainsMono NF`. On WSL the font must be installed on the *Windows* side — a WSL-only install is invisible to the terminal. |
 | No completions or diagnostics | `:LspInfo` — is a server attached? `:Mason` — is it installed? |
 | clangd errors on every `#include` | No `compile_commands.json`; see above. |
 | Treesitter parser build fails | Missing C compiler. Re-run `bootstrap.sh`. |
