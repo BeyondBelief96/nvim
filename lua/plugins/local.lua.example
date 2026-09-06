@@ -1,0 +1,24 @@
+-- Copy to lua/plugins/local.lua for machine-specific tweaks. That filename is
+-- gitignored, so work laptop settings never end up in the shared repo.
+--
+-- lazy.nvim imports every file in this directory, so anything you return here
+-- is merged in as an extra plugin spec. Returning {} is fine.
+
+return {
+  -- Example: a different colourscheme on this machine only.
+  -- {
+  --   "catppuccin/nvim",
+  --   name = "catppuccin",
+  --   priority = 1000,
+  --   config = function() vim.cmd.colorscheme("catppuccin-mocha") end,
+  -- },
+
+  -- Example: add a language server on this machine only.
+  -- {
+  --   "neovim/nvim-lspconfig",
+  --   opts = function()
+  --     vim.lsp.config("gopls", {})
+  --     vim.lsp.enable("gopls")
+  --   end,
+  -- },
+}

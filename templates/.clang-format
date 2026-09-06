@@ -1,0 +1,18 @@
+# Drop this at the root of a C++ project. conform.nvim runs clang-format on
+# save and clang-format picks up the nearest .clang-format file automatically.
+---
+Language: Cpp
+BasedOnStyle: LLVM
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+ColumnLimit: 100
+AccessModifierOffset: -4
+AllowShortFunctionsOnASingleLine: Empty
+AlwaysBreakTemplateDeclarations: Yes
+BreakBeforeBraces: Attach
+IncludeBlocks: Regroup
+PointerAlignment: Left
+SortIncludes: CaseSensitive
+SpaceAfterTemplateKeyword: false
+Standard: c++20

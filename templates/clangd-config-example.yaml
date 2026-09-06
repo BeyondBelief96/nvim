@@ -1,0 +1,16 @@
+# Optional. Save as `.clangd` at your project root to tweak clangd behaviour.
+CompileFlags:
+  Add: [-std=c++20, -Wall]
+  # If your compile_commands.json lives somewhere other than the project root:
+  # CompilationDatabase: build/Debug
+
+Diagnostics:
+  ClangTidy:
+    Add: [modernize-*, performance-*, bugprone-*]
+    Remove: [modernize-use-trailing-return-type]
+  UnusedIncludes: Strict
+
+InlayHints:
+  Enabled: Yes
+  ParameterNames: Yes
+  DeducedTypes: Yes

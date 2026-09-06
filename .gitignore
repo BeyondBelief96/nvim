@@ -1,0 +1,10 @@
+# lazy.nvim installs plugins into stdpath('data'), not here, but be safe:
+lazy/
+plugin/packer_compiled.lua
+
+# Local, machine-specific overrides -- see lua/plugins/local.lua.example
+lua/plugins/local.lua
+
+# Editor/OS noise
+*.swp
+.DS_Store
