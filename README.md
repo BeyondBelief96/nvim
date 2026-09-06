@@ -179,6 +179,7 @@ Leader is **Space**. Press `<Space>` and pause — which-key lists everything.
 |---|---|---|
 | TypeScript / JavaScript | `ts_ls` | Type checking, refactors, inlay hints |
 | — linting | `eslint` | Auto-fixes on save if the project has an ESLint config |
+| — linting | `oxlint` | Used automatically in oxlint projects; see below |
 | HTML | `html`, `emmet_language_server` | Emmet: type `div.foo>ul>li*3` then `<C-y>,` |
 | CSS / SCSS | `cssls`, `tailwindcss` | |
 | JSON / YAML | `jsonls`, `yamlls` | Schema validation |
@@ -188,6 +189,38 @@ Leader is **Space**. Press `<Space>` and pause — which-key lists everything.
 
 Formatters: `prettierd` (web), `clang-format` (C/C++), `stylua` (Lua).
 All installed by mason; `:Mason` to browse or add more.
+
+### oxlint vs ESLint
+
+Both linters are installed, and the config picks per project so you never get
+two linters fighting over the same buffer:
+
+| Project has | Linters that attach |
+|---|---|
+| `.oxlintrc.json` / `oxlint.config.ts` only | oxlint |
+| ESLint config only | eslint |
+| Both | both |
+| Neither | neither |
+
+Detection walks up from the current file, so this works in monorepos where
+different packages use different linters.
+
+Two upstream quirks the config works around, worth knowing if you ever debug this:
+
+- oxlint's shipped config doesn't set `workspace_required`, so with no oxlint
+  config found it would still start rootless and attach to every JS/TS buffer.
+  The config sets that flag.
+- ESLint roots on a lockfile or `.git`, so it attaches to almost any JS project
+  including oxlint-only ones. The config skips it when oxlint config is present
+  and no ESLint config is.
+
+**Fixes on save** apply for whichever linter attached. Note oxlint only applies
+fixes it classifies as *safe* — `eqeqeq` and `no-debugger` are marked dangerous
+upstream, so they're reported but never auto-applied. Run `oxlint
+--fix-dangerously` from a shell if you want those. Set `fixKind` in the oxlint
+`settings` block in `lua/plugins/lsp.lua` to change this.
+
+oxlint uses *pull* diagnostics, so its messages show `source = oxc`.
 
 ### Getting clangd to work
 

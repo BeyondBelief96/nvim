@@ -101,12 +101,35 @@ return {
             })
           end
 
-          -- ESLint: apply all auto-fixable problems on save, like VS Code's
-          -- "source.fixAll.eslint" code action on save.
+          -- Apply auto-fixable lint problems on save, like VS Code's
+          -- "source.fixAll" code action on save.
+          --
+          -- eslint's :LspEslintFixAll uses request_sync internally, so it is
+          -- safe to run straight from BufWritePre.
           if client.name == "eslint" then
             vim.api.nvim_create_autocmd("BufWritePre", {
               buffer = ev.buf,
               command = "LspEslintFixAll",
+            })
+          end
+
+          -- oxlint's :LspOxlintFixAll uses client:exec_cmd, which is async and
+          -- therefore races BufWritePre -- the file is written before the edits
+          -- arrive, and the buffer is left modified afterwards. Issue the same
+          -- workspace command synchronously instead so fixes land before save.
+          --
+          -- Note oxlint only applies fixes it classifies as safe (its default
+          -- fixKind = "safe_fix"). Rules whose fix is "dangerous" -- eqeqeq and
+          -- no-debugger among them -- are reported but never auto-applied.
+          if client.name == "oxlint" then
+            vim.api.nvim_create_autocmd("BufWritePre", {
+              buffer = ev.buf,
+              callback = function()
+                client:request_sync("workspace/executeCommand", {
+                  command = "oxc.fixAll",
+                  arguments = { { uri = vim.uri_from_bufnr(ev.buf) } },
+                }, 2000, ev.buf)
+              end,
             })
           end
         end,
@@ -183,6 +206,78 @@ return {
       })
 
       -- ---------------------------------------------------------------------
+      -- oxlint / eslint arbitration
+      --
+      -- oxlint's root markers are precise (.oxlintrc.json, oxlint.config.ts, or
+      -- an "oxlint" mention in package.json) but it does not declare
+      -- workspace_required, so with no match it starts anyway without a root.
+      -- Fixed just below.
+      --
+      -- eslint has the opposite problem: it roots on a lockfile or .git, so it attaches
+      -- to virtually any JS project -- including oxlint-only ones, where it
+      -- starts a server with no config to work from and reports nothing useful.
+      --
+      -- So the rule is: skip eslint when the project has oxlint config and no
+      -- eslint config. A project configured for both keeps both.
+      -- ---------------------------------------------------------------------
+      local OXLINT_MARKERS = { ".oxlintrc.json", ".oxlintrc.jsonc", "oxlint.config.ts" }
+      local ESLINT_MARKERS = {
+        "eslint.config.js", "eslint.config.mjs", "eslint.config.cjs",
+        "eslint.config.ts", "eslint.config.mts", "eslint.config.cts",
+        ".eslintrc", ".eslintrc.js", ".eslintrc.cjs", ".eslintrc.json",
+        ".eslintrc.yaml", ".eslintrc.yml",
+      }
+
+      local function found_upward(bufnr, markers)
+        local fname = vim.api.nvim_buf_get_name(bufnr)
+        if fname == "" then
+          return false
+        end
+        return vim.fs.find(markers, { path = fname, upward = true })[1] ~= nil
+      end
+
+      -- package.json can also carry eslint config inline under "eslintConfig".
+      local function package_json_has_eslint(bufnr)
+        local fname = vim.api.nvim_buf_get_name(bufnr)
+        if fname == "" then
+          return false
+        end
+        local pkg = vim.fs.find({ "package.json" }, { path = fname, upward = true })[1]
+        if not pkg then
+          return false
+        end
+        local ok, lines = pcall(vim.fn.readfile, pkg)
+        if not ok then
+          return false
+        end
+        local decoded_ok, decoded = pcall(vim.json.decode, table.concat(lines, "\n"))
+        return decoded_ok and type(decoded) == "table" and decoded.eslintConfig ~= nil
+      end
+
+      -- oxlint's shipped config has no `workspace_required`, so when its root
+      -- markers match nothing it still calls on_dir(nil) and starts rootless,
+      -- attaching to every JS/TS buffer. eslint sets workspace_required and so
+      -- correctly stays out. Setting it here makes oxlint behave the same way:
+      -- no oxlint project root, no oxlint server.
+      vim.lsp.config("oxlint", { workspace_required = true })
+
+      -- Captured before the override so the wrapper can delegate to it.
+      local eslint_root_dir = vim.lsp.config.eslint.root_dir
+
+      vim.lsp.config("eslint", {
+        root_dir = function(bufnr, on_dir)
+          if found_upward(bufnr, OXLINT_MARKERS)
+            and not found_upward(bufnr, ESLINT_MARKERS)
+            and not package_json_has_eslint(bufnr)
+          then
+            -- Returning without calling on_dir leaves eslint unstarted here.
+            return
+          end
+          return eslint_root_dir(bufnr, on_dir)
+        end,
+      })
+
+      -- ---------------------------------------------------------------------
       -- Install and enable. mason-lspconfig calls vim.lsp.enable() for every
       -- server it manages, so nothing else is needed to turn them on.
       -- ---------------------------------------------------------------------
@@ -191,6 +286,8 @@ return {
           -- Web
           "ts_ls",                    -- TypeScript/JavaScript type checking
           "eslint",                   -- JS/TS linting (+ fix on save)
+          "oxlint",                   -- fast Rust linter; auto-used where a
+                                      -- project has oxlint config (see above)
           "html",
           "cssls",
           "emmet_language_server",    -- HTML/CSS abbreviation expansion

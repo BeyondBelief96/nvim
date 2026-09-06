@@ -17,6 +17,7 @@ local packages = {
   -- Web
   "typescript-language-server",
   "eslint-lsp",
+  "oxlint",
   "html-lsp",
   "css-lsp",
   "emmet-language-server",
