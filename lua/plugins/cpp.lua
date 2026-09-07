@@ -5,6 +5,18 @@
 -- cmake-tools generates one automatically (see cmake_build_options below);
 -- for non-CMake projects use `bear -- make` or a compile_flags.txt.
 
+local platform = require("core.platform")
+
+-- Where CMake writes its build tree, and how clangd is pointed at the
+-- compile_commands.json inside it.
+--
+-- Everywhere else: a per-build-type directory, symlinked into the project root
+-- so clangd finds it. On native Windows, creating that symlink needs
+-- Developer Mode or an elevated Neovim, so instead build into a plain `build/`
+-- -- a directory clangd already searches on its own -- and skip the link.
+-- The cost is that Debug and Release share one build tree there.
+local build_directory = platform.is_windows and "build" or "build/${variant:buildType}"
+
 return {
   -- Inlay hints, type hierarchy, and :ClangdSwitchSourceHeader.
   {
@@ -47,12 +59,13 @@ return {
     },
     opts = {
       cmake_command = "cmake",
-      cmake_build_directory = "build/${variant:buildType}",
+      cmake_build_directory = build_directory,
       cmake_generate_options = {
         "-D", "CMAKE_EXPORT_COMPILE_COMMANDS=1", -- this is what feeds clangd
         "-G", "Ninja",
       },
-      cmake_soft_link_compile_commands = true, -- symlink it to the project root
+      -- Symlink compile_commands.json into the project root (see above).
+      cmake_soft_link_compile_commands = not platform.is_windows,
       cmake_dap_configuration = {
         name = "cpp",
         type = "codelldb",

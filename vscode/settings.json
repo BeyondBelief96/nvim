@@ -1,0 +1,158 @@
+// VS Code settings that mirror this Neovim config.
+//
+// Merge these into your VS Code User settings (Ctrl+Shift+P ->
+// "Preferences: Open User Settings (JSON)"). Comments are legal in
+// settings.json, so you can paste this wholesale.
+//
+// Setup instructions: see vscode/README.md in this repo.
+{
+  // =========================================================================
+  // vscode-neovim -- point it at a real nvim binary and at THIS config
+  // =========================================================================
+
+  // Only the path for your current OS is used; the others are ignored.
+  // Change the Linux/WSL path if `which nvim` says something else.
+  "vscode-neovim.neovimExecutablePaths.linux": "/usr/bin/nvim",
+  "vscode-neovim.neovimExecutablePaths.darwin": "/opt/homebrew/bin/nvim",
+  "vscode-neovim.neovimExecutablePaths.win32": "C:\\Program Files\\Neovim\\bin\\nvim.exe",
+
+  // Leave these unset to use the default config location (~/.config/nvim on
+  // Linux/macOS, ~/AppData/Local/nvim on Windows). Set them only if this repo
+  // lives somewhere else.
+  // "vscode-neovim.neovimInitVimPaths.linux": "/home/YOU/.config/nvim/init.lua",
+
+  // Under WSL: run the Linux nvim from a Windows VS Code.
+  // "vscode-neovim.useWSL": true,
+
+  // =========================================================================
+  // Ctrl-key arbitration -- the part that decides "Vim or VS Code?"
+  //
+  // Any letter listed here goes to Neovim. Anything NOT listed stays a normal
+  // VS Code keybinding. The lists below deliberately leave VS Code owning the
+  // famous ones: Ctrl+P (quick open), Ctrl+Shift+P, Ctrl+F (find),
+  // Ctrl+B (sidebar), Ctrl+N, Ctrl+S, Ctrl+W, Ctrl+`, Ctrl+/.
+  // =========================================================================
+
+  "vscode-neovim.ctrlKeysForNormalMode": [
+    "a", // increment number under cursor
+    "d", // half-page down (your keymaps.lua maps this to <C-d>zz)
+    "e", // scroll down one line
+    "i", // jump list forward
+    "o", // jump list back -- the "go back after gd" key
+    "r", // redo
+    "u", // half-page up
+    "v", // visual block
+    "x", // decrement number under cursor
+    "y"  // scroll up one line
+  ],
+
+  "vscode-neovim.ctrlKeysForInsertMode": [
+    "h", // backspace
+    "o", // one-shot normal mode
+    "r", // insert from register
+    "u", // delete to start of line
+    "w"  // delete word backwards
+  ],
+
+  // =========================================================================
+  // Editor -- mirrors lua/core/options.lua
+  // =========================================================================
+  "editor.lineNumbers": "relative",       // opt.relativenumber
+  "editor.cursorSurroundingLines": 12,    // opt.scrolloff = 12
+  "editor.tabSize": 4,                    // opt.tabstop / shiftwidth
+  "editor.insertSpaces": true,            // opt.expandtab
+  "editor.wordWrap": "off",               // opt.wrap = false
+  "editor.renderWhitespace": "boundary",  // opt.list + listchars
+  "editor.renderLineHighlight": "all",    // opt.cursorline
+  "editor.scrollBeyondLastLine": false,
+  "editor.minimap.enabled": false,
+  "search.smartCase": true,               // opt.ignorecase + opt.smartcase
+  "files.trimTrailingWhitespace": true,   // autocmds.lua trim_whitespace
+  "files.insertFinalNewline": true,
+  "files.restoreUndoStack": true,         // opt.undofile
+
+  // autocmds.lua exempts markdown from whitespace trimming (trailing spaces
+  // are a hard line break there).
+  "[markdown]": {
+    "files.trimTrailingWhitespace": false
+  },
+
+  // vscode-neovim renders the cursor itself; VS Code's smooth animations
+  // fight it and produce visible lag in normal mode.
+  "editor.cursorSmoothCaretAnimation": "off",
+  "editor.smoothScrolling": false,
+  "workbench.list.smoothScrolling": false,
+
+  // =========================================================================
+  // Two-space indent for web languages -- mirrors the two_space_indent
+  // autocmd in lua/core/autocmds.lua
+  // =========================================================================
+  "[javascript]":      { "editor.tabSize": 2 },
+  "[javascriptreact]": { "editor.tabSize": 2 },
+  "[typescript]":      { "editor.tabSize": 2 },
+  "[typescriptreact]": { "editor.tabSize": 2 },
+  "[html]":            { "editor.tabSize": 2 },
+  "[css]":             { "editor.tabSize": 2 },
+  "[scss]":            { "editor.tabSize": 2 },
+  "[json]":            { "editor.tabSize": 2 },
+  "[jsonc]":           { "editor.tabSize": 2 },
+  "[yaml]":            { "editor.tabSize": 2 },
+
+  // =========================================================================
+  // TypeScript inlay hints -- the same tsserver options as the `ts_inlay`
+  // table in lua/plugins/lsp.lua, so hover and ghost-text types match.
+  // =========================================================================
+  "typescript.inlayHints.variableTypes.enabled": true,
+  "typescript.inlayHints.parameterNames.enabled": "literal",
+  "typescript.inlayHints.parameterNames.suppressWhenArgumentMatchesName": true,
+  "typescript.inlayHints.parameterTypes.enabled": true,
+  "typescript.inlayHints.propertyDeclarationTypes.enabled": true,
+  "typescript.inlayHints.functionLikeReturnTypes.enabled": true,
+  "typescript.inlayHints.enumMemberValues.enabled": true,
+  "javascript.inlayHints.variableTypes.enabled": true,
+  "javascript.inlayHints.parameterNames.enabled": "literal",
+  "javascript.inlayHints.parameterTypes.enabled": true,
+  "javascript.inlayHints.propertyDeclarationTypes.enabled": true,
+  "javascript.inlayHints.functionLikeReturnTypes.enabled": true,
+  "javascript.inlayHints.enumMemberValues.enabled": true,
+
+  // Use the workspace's own TypeScript, matching what ts_ls resolves to.
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+
+  // =========================================================================
+  // Format on save -- mirrors conform.nvim (lua/plugins/formatting.lua)
+  // =========================================================================
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "[lua]": { "editor.tabSize": 2, "editor.defaultFormatter": "JohnnyMorganz.stylua" },
+  "[cpp]": { "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd" },
+  "[c]":   { "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd" },
+
+  // ESLint / oxlint fix-on-save -- the equivalent of the LspAttach BufWritePre
+  // hooks in lua/plugins/lsp.lua.
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit",
+    "source.fixAll.oxc": "explicit"
+  },
+
+  // =========================================================================
+  // Theme -- gruvbox-material has an official VS Code port
+  // =========================================================================
+  "workbench.colorTheme": "Gruvbox Material Dark",
+
+  // =========================================================================
+  // clangd -- the same flags as lua/plugins/lsp.lua. Requires the clangd
+  // extension AND disabling Microsoft's C/C++ IntelliSense so they don't
+  // both index the project.
+  // =========================================================================
+  "clangd.arguments": [
+    "--background-index",
+    "--clang-tidy",
+    "--header-insertion=iwyu",
+    "--completion-style=detailed",
+    "--function-arg-placeholders",
+    "--fallback-style=llvm"
+  ],
+  "C_Cpp.intelliSenseEngine": "disabled"
+}

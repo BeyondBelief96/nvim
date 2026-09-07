@@ -1,0 +1,146 @@
+// FALLBACK: settings for the `VSCodeVim` extension (vscodevim.vim).
+//
+// Use this ONLY if you cannot use vscode-neovim -- typically because you can't
+// install an `nvim` binary on a locked-down work machine. VSCodeVim is a
+// reimplementation of Vim in TypeScript; it does NOT read this repo's
+// init.lua, so every keymap has to be restated here and the two will drift.
+// Prefer vscode/settings.json + vscode-neovim where you can.
+//
+// Merge into VS Code User settings JSON. The editor / TypeScript / formatting
+// sections of vscode/settings.json still apply -- take those from there and
+// only the "vim.*" keys from here.
+{
+  "vim.leader": "<space>",
+  "vim.useSystemClipboard": true,        // opt.clipboard = unnamedplus
+  "vim.hlsearch": false,                 // opt.hlsearch = false
+  "vim.incsearch": true,
+  "vim.ignorecase": true,
+  "vim.smartcase": true,
+  "vim.surround": true,                  // replaces nvim-surround
+  "vim.timeout": 400,                    // opt.timeoutlen
+
+  // Ctrl-key arbitration. `false` = VS Code keeps the key. This is the
+  // VSCodeVim equivalent of `vscode-neovim.ctrlKeysForNormalMode`, except it
+  // is opt-OUT rather than opt-in: VSCodeVim grabs Ctrl keys by default.
+  "vim.useCtrlKeys": true,
+  "vim.handleKeys": {
+    "<C-p>": false,   // quick open
+    "<C-f>": false,   // find  (you lose Vim's page-forward)
+    "<C-b>": false,   // toggle sidebar (you lose Vim's page-back)
+    "<C-n>": false,   // new file
+    "<C-s>": false,   // save
+    "<C-w>": false,   // close editor
+    "<C-j>": false,   // toggle panel
+    "<C-k>": false,   // chord prefix -- important, don't let Vim have this
+    "<C-t>": false,   // go to symbol in workspace
+    "<C-`>": false    // toggle terminal
+  },
+
+  // -------------------------------------------------------------------------
+  // Normal mode -- mirrors lua/core/keymaps.lua and lua/core/vscode.lua
+  // -------------------------------------------------------------------------
+  "vim.normalModeKeyBindingsNonRecursive": [
+    // Keep the cursor centred (keymaps.lua)
+    { "before": ["<C-d>"], "after": ["<C-d>", "z", "z"] },
+    { "before": ["<C-u>"], "after": ["<C-u>", "z", "z"] },
+    { "before": ["n"],     "after": ["n", "z", "z", "z", "v"] },
+    { "before": ["N"],     "after": ["N", "z", "z", "z", "v"] },
+
+    // Clear search highlight
+    { "before": ["<Esc>"], "commands": [":nohl"] },
+
+    // Delete without yanking (<leader>D)
+    { "before": ["<leader>", "D"], "after": ["\"", "_", "d"] },
+
+    // LSP
+    { "before": ["g", "d"], "commands": ["editor.action.revealDefinition"] },
+    { "before": ["g", "r"], "commands": ["editor.action.goToReferences"] },
+    { "before": ["g", "I"], "commands": ["editor.action.goToImplementation"] },
+    { "before": ["g", "y"], "commands": ["editor.action.goToTypeDefinition"] },
+    { "before": ["g", "D"], "commands": ["editor.action.revealDeclaration"] },
+    { "before": ["K"],      "commands": ["editor.action.showHover"] },
+    { "before": ["<leader>", "r", "n"], "commands": ["editor.action.rename"] },
+    { "before": ["<leader>", "c", "a"], "commands": ["editor.action.quickFix"] },
+    { "before": ["<leader>", "l", "s"], "commands": ["workbench.action.gotoSymbol"] },
+    { "before": ["<leader>", "l", "S"], "commands": ["workbench.action.showAllSymbols"] },
+    { "before": ["<leader>", "l", "p"], "commands": ["editor.action.peekDefinition"] },
+    { "before": ["<leader>", "l", "r"], "commands": ["editor.action.referenceSearch.trigger"] },
+    { "before": ["<leader>", "t", "h"], "commands": ["editor.action.toggleInlayHints"] },
+
+    // Find (<leader>p)
+    { "before": ["<leader>", "p", "f"], "commands": ["workbench.action.quickOpen"] },
+    { "before": ["<leader>", "p", "s"], "commands": ["workbench.action.findInFiles"] },
+    { "before": ["<leader>", "p", "w"], "commands": ["workbench.action.findInFiles"] },
+    { "before": ["<leader>", "p", "b"], "commands": ["workbench.action.showAllEditors"] },
+    { "before": ["<leader>", "p", "o"], "commands": ["workbench.action.openRecent"] },
+    { "before": ["<leader>", "p", "d"], "commands": ["workbench.actions.view.problems"] },
+    { "before": ["<leader>", "p", "v"], "commands": ["workbench.view.explorer"] },
+    { "before": ["<leader>", "p", "V"], "commands": ["workbench.files.action.showActiveFileInExplorer"] },
+    { "before": ["<leader>", "/"],      "commands": ["actions.find"] },
+
+    // Diagnostics
+    { "before": ["]", "d"], "commands": ["editor.action.marker.next"] },
+    { "before": ["[", "d"], "commands": ["editor.action.marker.prev"] },
+    { "before": ["<leader>", "e"],      "commands": ["editor.action.showHover"] },
+    { "before": ["<leader>", "q"],      "commands": ["workbench.actions.view.problems"] },
+    { "before": ["<leader>", "x", "x"], "commands": ["workbench.actions.view.problems"] },
+    { "before": ["<leader>", "x", "s"], "commands": ["outline.focus"] },
+
+    // Format
+    { "before": ["<leader>", "f"], "commands": ["editor.action.formatDocument"] },
+
+    // Windows / editors
+    { "before": ["<leader>", "w", "v"], "commands": ["workbench.action.splitEditorRight"] },
+    { "before": ["<leader>", "w", "s"], "commands": ["workbench.action.splitEditorDown"] },
+    { "before": ["<leader>", "w", "q"], "commands": ["workbench.action.closeActiveEditor"] },
+    { "before": ["<C-h>"], "commands": ["workbench.action.navigateLeft"] },
+    { "before": ["<C-l>"], "commands": ["workbench.action.navigateRight"] },
+    { "before": ["H"],     "commands": ["workbench.action.previousEditor"] },
+    { "before": ["L"],     "commands": ["workbench.action.nextEditor"] },
+    { "before": ["<leader>", "b", "d"], "commands": ["workbench.action.closeActiveEditor"] },
+
+    // Git
+    { "before": ["]", "h"], "commands": ["workbench.action.editor.nextChange"] },
+    { "before": ["[", "h"], "commands": ["workbench.action.editor.previousChange"] },
+    { "before": ["<leader>", "g", "s"], "commands": ["git.stageSelectedRanges"] },
+    { "before": ["<leader>", "g", "r"], "commands": ["git.revertSelectedRanges"] },
+    { "before": ["<leader>", "g", "d"], "commands": ["git.openChange"] },
+    { "before": ["<leader>", "g", "g"], "commands": ["workbench.view.scm"] },
+    { "before": ["<leader>", "g", "b"], "commands": ["gitlens.toggleFileBlame"] },
+
+    // Debug
+    { "before": ["<leader>", "d", "b"], "commands": ["editor.debug.action.toggleBreakpoint"] },
+    { "before": ["<leader>", "d", "B"], "commands": ["editor.debug.action.conditionalBreakpoint"] },
+    { "before": ["<leader>", "d", "c"], "commands": ["workbench.action.debug.continue"] },
+    { "before": ["<leader>", "d", "i"], "commands": ["workbench.action.debug.stepInto"] },
+    { "before": ["<leader>", "d", "o"], "commands": ["workbench.action.debug.stepOver"] },
+    { "before": ["<leader>", "d", "O"], "commands": ["workbench.action.debug.stepOut"] },
+    { "before": ["<leader>", "d", "t"], "commands": ["workbench.action.debug.stop"] },
+    { "before": ["<leader>", "d", "u"], "commands": ["workbench.view.debug"] },
+
+    // Terminal
+    { "before": ["<leader>", "t", "t"], "commands": ["workbench.action.terminal.toggleTerminal"] }
+  ],
+
+  // -------------------------------------------------------------------------
+  // Visual mode -- mirrors lua/core/keymaps.lua
+  // -------------------------------------------------------------------------
+  "vim.visualModeKeyBindingsNonRecursive": [
+    // Move selected lines up/down, re-indenting
+    { "before": ["J"], "commands": ["editor.action.moveLinesDownAction"] },
+    { "before": ["K"], "commands": ["editor.action.moveLinesUpAction"] },
+
+    // Stay in visual mode when indenting
+    { "before": ["<"], "after": ["<", "g", "v"] },
+    { "before": [">"], "after": [">", "g", "v"] },
+
+    // Paste over selection without clobbering the unnamed register
+    { "before": ["<leader>", "p"], "after": ["\"", "_", "d", "P"] },
+    { "before": ["<leader>", "D"], "after": ["\"", "_", "d"] },
+
+    { "before": ["<leader>", "f"],      "commands": ["editor.action.formatSelection"] },
+    { "before": ["<leader>", "c", "a"], "commands": ["editor.action.quickFix"] },
+    { "before": ["<leader>", "g", "s"], "commands": ["git.stageSelectedRanges"] },
+    { "before": ["<leader>", "g", "r"], "commands": ["git.revertSelectedRanges"] }
+  ]
+}

@@ -1,3 +1,15 @@
+local platform = require("core.platform")
+
+-- Native Windows Neovim inherits cmd.exe as 'shell'. Give the integrated
+-- terminal PowerShell instead -- but only the terminal. Setting 'shell'
+-- globally would also change how vim-fugitive and every other `system()`
+-- caller quotes its arguments, and their Windows escaping is written for
+-- cmd.exe. Elsewhere this is `vim.o.shell`, i.e. toggleterm's own default.
+local terminal_shell = vim.o.shell
+if platform.is_windows then
+  terminal_shell = vim.fn.executable("pwsh") == 1 and "pwsh" or "powershell"
+end
+
 return {
   { "nvim-tree/nvim-web-devicons", lazy = true },
 
@@ -111,6 +123,7 @@ return {
       { "<leader>tv", "<cmd>ToggleTerm direction=vertical size=80<cr>", desc = "Terminal (vsplit)" },
     },
     opts = {
+      shell = terminal_shell,
       direction = "float",
       float_opts = { border = "rounded" },
       shade_terminals = true,

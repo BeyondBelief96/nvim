@@ -4,6 +4,28 @@
 -- Adapters (codelldb for C/C++, js-debug-adapter for Node) are installed by
 -- mason-tool-installer in lua/plugins/lsp.lua.
 
+-- Resolve a mason-installed adapter to something nvim-dap can actually spawn.
+--
+-- mason puts its shims in stdpath("data")/mason/bin, which is on Neovim's
+-- $PATH, so the bare name is enough on Linux and macOS. On Windows some of
+-- those shims are `.cmd` batch files (the npm-packaged adapters especially),
+-- and CreateProcess -- which is what libuv, and so nvim-dap, ends up calling
+-- -- cannot execute a batch file directly. `exepath()` applies %PATHEXT% and
+-- gives the real filename; anything that turns out to be a script gets routed
+-- through cmd.exe.
+local function adapter_command(name)
+  local path = vim.fn.exepath(name)
+  if path == "" then
+    -- Not installed yet. Hand back the bare name so nvim-dap reports the
+    -- missing adapter itself rather than us guessing at a path.
+    return name, {}
+  end
+  if path:lower():match("%.cmd$") or path:lower():match("%.bat$") then
+    return "cmd.exe", { "/c", path }
+  end
+  return path, {}
+end
+
 return {
   {
     "mfussenegger/nvim-dap",
@@ -59,12 +81,13 @@ return {
       -- ---------------------------------------------------------------------
       -- C / C++  (codelldb). mason puts its binaries on Neovim's PATH.
       -- ---------------------------------------------------------------------
+      local codelldb, codelldb_args = adapter_command("codelldb")
       dap.adapters.codelldb = {
         type = "server",
         port = "${port}",
         executable = {
-          command = "codelldb",
-          args = { "--port", "${port}" },
+          command = codelldb,
+          args = vim.list_extend(codelldb_args, { "--port", "${port}" }),
         },
       }
 
@@ -95,14 +118,16 @@ return {
       -- ---------------------------------------------------------------------
       -- JavaScript / TypeScript  (js-debug-adapter)
       -- ---------------------------------------------------------------------
+      local js_debug, js_debug_args = adapter_command("js-debug-adapter")
       for _, adapter in ipairs({ "pwa-node", "pwa-chrome" }) do
         dap.adapters[adapter] = {
           type = "server",
           host = "localhost",
           port = "${port}",
           executable = {
-            command = "js-debug-adapter",
-            args = { "${port}" },
+            command = js_debug,
+            -- Fresh copy per adapter: list_extend mutates its first argument.
+            args = vim.list_extend(vim.deepcopy(js_debug_args), { "${port}" }),
           },
         }
       end

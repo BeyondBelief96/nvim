@@ -1,20 +1,37 @@
 -- Fuzzy finding: files, live grep, symbols, git. Replaces the fzf.vim setup
 -- from the old config, with the same keys bound to the equivalent pickers.
 
+local platform = require("core.platform")
+
+-- Native C sorter build. The upstream Makefile assumes a POSIX toolchain, so
+-- on native Windows use the CMake path the plugin also ships -- cmake + a
+-- compiler are what bootstrap.ps1 installs there, and `make` usually is not.
+local fzf_build = platform.is_windows
+    and table.concat({
+      "cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=Release",
+      "cmake --build build --config Release",
+      "cmake --install build --prefix build",
+    }, " && ")
+  or "make"
+
+local fzf_tool = platform.is_windows and "cmake" or "make"
+
 return {
   {
     "nvim-telescope/telescope.nvim",
     cmd = "Telescope",
     dependencies = {
       "nvim-lua/plenary.nvim",
-      -- Native C sorter -- much faster on big repos. Needs make + gcc, which
-      -- bootstrap.sh installs. If the build fails Telescope still works, just
-      -- with the slower Lua sorter.
+      -- Native C sorter -- much faster on big repos. Needs the build tool
+      -- above, which bootstrap.sh / bootstrap.ps1 installs. If it is missing
+      -- or the build fails, Telescope still works -- just with the slower Lua
+      -- sorter (`load_extension("fzf")` below is wrapped in pcall for exactly
+      -- this reason).
       {
         "nvim-telescope/telescope-fzf-native.nvim",
-        build = "make",
+        build = fzf_build,
         cond = function()
-          return vim.fn.executable("make") == 1
+          return vim.fn.executable(fzf_tool) == 1
         end,
       },
       "nvim-telescope/telescope-ui-select.nvim",

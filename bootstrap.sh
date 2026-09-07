@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 #
 # Bootstraps this Neovim config on a fresh machine (Linux, WSL, or macOS).
+# Native Windows has its own equivalent: bootstrap.ps1.
 #
 #   git clone <your-repo> ~/.config/nvim
 #   ~/.config/nvim/bootstrap.sh
@@ -43,7 +44,7 @@ case "$OS" in
     else die "No supported package manager found (apt/dnf/pacman/zypper)."
     fi
     ;;
-  *) die "Unsupported OS: $OS. On Windows, run this inside WSL2." ;;
+  *) die "Unsupported OS: $OS. For native Windows use bootstrap.ps1; otherwise run this inside WSL2." ;;
 esac
 
 WSL_NOTE=""; if [ "$IS_WSL" = 1 ]; then WSL_NOTE=" (WSL)"; fi
