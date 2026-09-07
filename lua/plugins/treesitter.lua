@@ -6,6 +6,54 @@ return {
   {
     "nvim-treesitter/nvim-treesitter",
     branch = "master", -- pinned: `main` is a rewrite with a different API
+
+    -- Neovim 0.12 dropped the `all` option from vim.treesitter.query's
+    -- add_predicate/add_directive: handlers now ALWAYS receive
+    -- `table<integer, TSNode[]>`. The master branch above still registers all
+    -- six of its handlers with `all = false` and indexes `match[id]` expecting
+    -- a single node (lua/nvim-treesitter/query_predicates.lua:19). It now gets
+    -- a one-element list instead, which sails past the `if not node` guards and
+    -- blows up on first use -- e.g. `#set-lang-from-info-string!` on any ```lang
+    -- fence, giving "attempt to call method 'range' (a nil value)".
+    --
+    -- Restore the unwrapping that 0.11 did (neovim v0.11.0
+    -- runtime/lua/vim/treesitter/query.lua:796,839 -- note it takes v[#v], the
+    -- LAST node, not the first). We only unwrap when `all = false` is passed
+    -- EXPLICITLY: that flag means "written against the old single-node API".
+    -- 0.11 also unwrapped directives that passed no opts at all, but copying
+    -- that would break 0.12-native plugins, which correctly expect lists.
+    --
+    -- Delete this whole block when the master pin above goes away.
+    init = function()
+      if vim.fn.has("nvim-0.12") == 0 then
+        return
+      end
+      local query = require("vim.treesitter.query")
+      if query._nvim012_all_shim then
+        return
+      end
+      query._nvim012_all_shim = true
+
+      local function unwrap_last(handler)
+        return function(match, ...)
+          local single = {}
+          for id, nodes in pairs(match) do
+            single[id] = nodes[#nodes]
+          end
+          return handler(single, ...)
+        end
+      end
+
+      for _, name in ipairs({ "add_predicate", "add_directive" }) do
+        local orig = query[name]
+        query[name] = function(pred_name, handler, opts)
+          if type(opts) == "table" and opts.all == false then
+            handler = unwrap_last(handler)
+          end
+          return orig(pred_name, handler, opts)
+        end
+      end
+    end,
     build = ":TSUpdate",
     event = { "BufReadPost", "BufNewFile" },
     dependencies = { "nvim-treesitter/nvim-treesitter-textobjects" },
