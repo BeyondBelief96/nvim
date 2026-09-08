@@ -1,58 +1,105 @@
-// FALLBACK: settings for the `VSCodeVim` extension (vscodevim.vim).
+// VS Code settings for the VSCodeVim extension (vscodevim.vim).
 //
-// Use this ONLY if you cannot use vscode-neovim -- typically because you can't
-// install an `nvim` binary on a locked-down work machine. VSCodeVim is a
-// reimplementation of Vim in TypeScript; it does NOT read this repo's
-// init.lua, so every keymap has to be restated here and the two will drift.
-// Prefer vscode/settings.json + vscode-neovim where you can.
+// This file is SELF-CONTAINED: paste the whole thing into your VS Code User
+// settings and you are done. Do NOT also merge vscode/settings.json -- that
+// one is for the vscode-neovim extension and the two conflict.
 //
-// Merge into VS Code User settings JSON. The editor / TypeScript / formatting
-// sections of vscode/settings.json still apply -- take those from there and
-// only the "vim.*" keys from here.
+//   Ctrl+Shift+P -> "Preferences: Open User Settings (JSON)"
+//
+// Then merge vscode/keybindings.vscodevim.json into your keybindings:
+//
+//   Ctrl+Shift+P -> "Preferences: Open Keyboard Shortcuts (JSON)"
+//
+// Setup instructions and the full key table: see vscode/README.md.
+//
+// NOTE ON DRIFT: VSCodeVim never reads this repo's init.lua. The "vim.*"
+// sections below are a hand-maintained mirror of lua/core/keymaps.lua and
+// lua/core/vscode.lua. If you change a keymap there, change it here too --
+// nothing does it for you.
 {
-  "vim.leader": "<space>",
+  // =========================================================================
+  // Vim core -- mirrors lua/core/options.lua
+  // =========================================================================
+  "vim.leader": "<space>",               // vim.g.mapleader = " "
   "vim.useSystemClipboard": true,        // opt.clipboard = unnamedplus
   "vim.hlsearch": false,                 // opt.hlsearch = false
-  "vim.incsearch": true,
-  "vim.ignorecase": true,
-  "vim.smartcase": true,
-  "vim.surround": true,                  // replaces nvim-surround
-  "vim.timeout": 400,                    // opt.timeoutlen
+  "vim.incsearch": true,                 // opt.incsearch = true
+  "vim.ignorecase": true,                // opt.ignorecase = true
+  "vim.smartcase": true,                 // opt.smartcase = true
+  "vim.autoindent": true,                // opt.smartindent = true
+  "vim.timeout": 400,                    // opt.timeoutlen = 400
 
-  // Ctrl-key arbitration. `false` = VS Code keeps the key. This is the
-  // VSCodeVim equivalent of `vscode-neovim.ctrlKeysForNormalMode`, except it
-  // is opt-OUT rather than opt-in: VSCodeVim grabs Ctrl keys by default.
+  // Absolute line numbers in insert mode, relative everywhere else. Pairs
+  // with "editor.lineNumbers": "relative" below.
+  "vim.smartRelativeLine": true,
+
+  // Flash the yanked text -- the highlight_yank autocmd in core/autocmds.lua.
+  "vim.highlightedyank.enable": true,
+  "vim.highlightedyank.duration": 200,
+
+  // Built-in emulations. `surround` replaces nvim-surround from
+  // lua/plugins/editing.lua -- ys / cs / ds all work.
+  "vim.surround": true,
+
+  // Deliberately OFF, each because it would eat a key you already use:
+  //   "vim.sneak"                  -- takes over s / S (substitute)
+  //   "vim.replaceWithRegister"    -- takes over gr, which is go-to-references
+  //   "vim.camelCaseMotion.enable" -- takes over <leader>w, the window prefix
+  // Turn one on only if you also move the conflicting binding.
+  //
+  // easymotion is safe to enable -- it lives under <leader><leader>:
+  // "vim.easymotion": true,
+
+  // =========================================================================
+  // Ctrl-key arbitration -- the part that decides "Vim or VS Code?"
+  //
+  // VSCodeVim is opt-OUT: it grabs Ctrl keys by default, and `false` hands one
+  // back to VS Code. (vscode-neovim is the other way round.) The split below
+  // matches vscode/settings.json so both paths feel the same.
+  //
+  // Vim keeps: C-d C-u (half page), C-o C-i (jump list), C-r (redo),
+  //            C-v (visual block), C-e C-y (scroll line), C-a C-x (inc/dec).
+  // =========================================================================
   "vim.useCtrlKeys": true,
   "vim.handleKeys": {
     "<C-p>": false,   // quick open
-    "<C-f>": false,   // find  (you lose Vim's page-forward)
+    "<C-f>": false,   // find  (you lose Vim's page-forward -- use C-d twice)
     "<C-b>": false,   // toggle sidebar (you lose Vim's page-back)
     "<C-n>": false,   // new file
     "<C-s>": false,   // save
-    "<C-w>": false,   // close editor
+    "<C-w>": false,   // close editor (also loses delete-word-back in insert)
     "<C-j>": false,   // toggle panel
     "<C-k>": false,   // chord prefix -- important, don't let Vim have this
     "<C-t>": false,   // go to symbol in workspace
     "<C-`>": false    // toggle terminal
   },
 
-  // -------------------------------------------------------------------------
+  // Two caveats inherited from the terminal config, both easy to reverse:
+  //   <C-a> is increment-number, not select-all. Use ggVG, or add
+  //         "<C-a>": false above to get select-all back.
+  //   <C-v> is visual block, not paste. Use p, or add "<C-v>": false.
+
+  // =========================================================================
   // Normal mode -- mirrors lua/core/keymaps.lua and lua/core/vscode.lua
-  // -------------------------------------------------------------------------
+  // =========================================================================
   "vim.normalModeKeyBindingsNonRecursive": [
-    // Keep the cursor centred (keymaps.lua)
+    // --- keymaps.lua: keep the cursor centred ------------------------------
     { "before": ["<C-d>"], "after": ["<C-d>", "z", "z"] },
     { "before": ["<C-u>"], "after": ["<C-u>", "z", "z"] },
     { "before": ["n"],     "after": ["n", "z", "z", "z", "v"] },
     { "before": ["N"],     "after": ["N", "z", "z", "z", "v"] },
 
-    // Clear search highlight
+    // --- keymaps.lua: clear search highlight -------------------------------
     { "before": ["<Esc>"], "commands": [":nohl"] },
 
-    // Delete without yanking (<leader>D)
+    // --- keymaps.lua: delete without yanking -------------------------------
+    // (<leader>d is the debug prefix, so this lives on <leader>D.)
     { "before": ["<leader>", "D"], "after": ["\"", "_", "d"] },
 
-    // LSP
+    // --- <leader><CR> reloaded the Lua config; reload the window instead ---
+    { "before": ["<leader>", "<CR>"], "commands": ["workbench.action.reloadWindow"] },
+
+    // --- LSP ---------------------------------------------------------------
     { "before": ["g", "d"], "commands": ["editor.action.revealDefinition"] },
     { "before": ["g", "r"], "commands": ["editor.action.goToReferences"] },
     { "before": ["g", "I"], "commands": ["editor.action.goToImplementation"] },
@@ -67,18 +114,22 @@
     { "before": ["<leader>", "l", "r"], "commands": ["editor.action.referenceSearch.trigger"] },
     { "before": ["<leader>", "t", "h"], "commands": ["editor.action.toggleInlayHints"] },
 
-    // Find (<leader>p)
+    // --- Find (<leader>p) -- Telescope's slot, now VS Code's pickers -------
+    // <C-p> is deliberately not remapped: it stays Quick Open, which is what
+    // the terminal config binds it to anyway.
     { "before": ["<leader>", "p", "f"], "commands": ["workbench.action.quickOpen"] },
     { "before": ["<leader>", "p", "s"], "commands": ["workbench.action.findInFiles"] },
     { "before": ["<leader>", "p", "w"], "commands": ["workbench.action.findInFiles"] },
     { "before": ["<leader>", "p", "b"], "commands": ["workbench.action.showAllEditors"] },
     { "before": ["<leader>", "p", "o"], "commands": ["workbench.action.openRecent"] },
     { "before": ["<leader>", "p", "d"], "commands": ["workbench.actions.view.problems"] },
+    { "before": ["<leader>", "p", "k"], "commands": ["workbench.action.openGlobalKeybindings"] },
+    { "before": ["<leader>", "p", "t"], "commands": ["todo-tree.tree.focus"] },
     { "before": ["<leader>", "p", "v"], "commands": ["workbench.view.explorer"] },
     { "before": ["<leader>", "p", "V"], "commands": ["workbench.files.action.showActiveFileInExplorer"] },
     { "before": ["<leader>", "/"],      "commands": ["actions.find"] },
 
-    // Diagnostics
+    // --- Diagnostics -------------------------------------------------------
     { "before": ["]", "d"], "commands": ["editor.action.marker.next"] },
     { "before": ["[", "d"], "commands": ["editor.action.marker.prev"] },
     { "before": ["<leader>", "e"],      "commands": ["editor.action.showHover"] },
@@ -86,29 +137,42 @@
     { "before": ["<leader>", "x", "x"], "commands": ["workbench.actions.view.problems"] },
     { "before": ["<leader>", "x", "s"], "commands": ["outline.focus"] },
 
-    // Format
+    // --- Format (conform.nvim's slot) --------------------------------------
     { "before": ["<leader>", "f"], "commands": ["editor.action.formatDocument"] },
 
-    // Windows / editors
+    // --- Windows -> editor groups ------------------------------------------
+    // <leader>w was a <C-w> proxy; VS Code owns <C-w>, so bind the splits you
+    // actually use rather than forwarding the whole prefix.
     { "before": ["<leader>", "w", "v"], "commands": ["workbench.action.splitEditorRight"] },
     { "before": ["<leader>", "w", "s"], "commands": ["workbench.action.splitEditorDown"] },
     { "before": ["<leader>", "w", "q"], "commands": ["workbench.action.closeActiveEditor"] },
+    { "before": ["<leader>", "w", "o"], "commands": ["workbench.action.closeOtherEditors"] },
     { "before": ["<C-h>"], "commands": ["workbench.action.navigateLeft"] },
     { "before": ["<C-l>"], "commands": ["workbench.action.navigateRight"] },
-    { "before": ["H"],     "commands": ["workbench.action.previousEditor"] },
-    { "before": ["L"],     "commands": ["workbench.action.nextEditor"] },
+
+    // Resize with the arrow keys, same as keymaps.lua.
+    { "before": ["<C-up>"],    "commands": ["workbench.action.increaseViewHeight"] },
+    { "before": ["<C-down>"],  "commands": ["workbench.action.decreaseViewHeight"] },
+    { "before": ["<C-left>"],  "commands": ["workbench.action.decreaseViewWidth"] },
+    { "before": ["<C-right>"], "commands": ["workbench.action.increaseViewWidth"] },
+
+    // --- Buffers -> editor tabs --------------------------------------------
+    { "before": ["H"], "commands": ["workbench.action.previousEditor"] },
+    { "before": ["L"], "commands": ["workbench.action.nextEditor"] },
     { "before": ["<leader>", "b", "d"], "commands": ["workbench.action.closeActiveEditor"] },
 
-    // Git
+    // --- Git (gitsigns / fugitive slot -> VS Code SCM) ---------------------
     { "before": ["]", "h"], "commands": ["workbench.action.editor.nextChange"] },
     { "before": ["[", "h"], "commands": ["workbench.action.editor.previousChange"] },
+    { "before": ["<leader>", "g", "p"], "commands": ["editor.action.dirtydiff.next"] },
     { "before": ["<leader>", "g", "s"], "commands": ["git.stageSelectedRanges"] },
     { "before": ["<leader>", "g", "r"], "commands": ["git.revertSelectedRanges"] },
+    { "before": ["<leader>", "g", "S"], "commands": ["git.stage"] },
     { "before": ["<leader>", "g", "d"], "commands": ["git.openChange"] },
     { "before": ["<leader>", "g", "g"], "commands": ["workbench.view.scm"] },
     { "before": ["<leader>", "g", "b"], "commands": ["gitlens.toggleFileBlame"] },
 
-    // Debug
+    // --- Debug (nvim-dap's slot -> VS Code's debugger, the original) -------
     { "before": ["<leader>", "d", "b"], "commands": ["editor.debug.action.toggleBreakpoint"] },
     { "before": ["<leader>", "d", "B"], "commands": ["editor.debug.action.conditionalBreakpoint"] },
     { "before": ["<leader>", "d", "c"], "commands": ["workbench.action.debug.continue"] },
@@ -116,15 +180,21 @@
     { "before": ["<leader>", "d", "o"], "commands": ["workbench.action.debug.stepOver"] },
     { "before": ["<leader>", "d", "O"], "commands": ["workbench.action.debug.stepOut"] },
     { "before": ["<leader>", "d", "t"], "commands": ["workbench.action.debug.stop"] },
+    { "before": ["<leader>", "d", "r"], "commands": ["workbench.action.debug.restart"] },
     { "before": ["<leader>", "d", "u"], "commands": ["workbench.view.debug"] },
 
-    // Terminal
-    { "before": ["<leader>", "t", "t"], "commands": ["workbench.action.terminal.toggleTerminal"] }
+    // --- Terminal (toggleterm's slot) --------------------------------------
+    { "before": ["<leader>", "t", "t"], "commands": ["workbench.action.terminal.toggleTerminal"] },
+    { "before": ["<leader>", "t", "v"], "commands": ["workbench.action.createTerminalEditorSide"] }
+
+    // Folding is deliberately NOT remapped here: VSCodeVim already implements
+    // za / zc / zo / zR / zM against VS Code's own folds. core/vscode.lua has
+    // to remap them only because vscode-neovim does not.
   ],
 
-  // -------------------------------------------------------------------------
+  // =========================================================================
   // Visual mode -- mirrors lua/core/keymaps.lua
-  // -------------------------------------------------------------------------
+  // =========================================================================
   "vim.visualModeKeyBindingsNonRecursive": [
     // Move selected lines up/down, re-indenting
     { "before": ["J"], "commands": ["editor.action.moveLinesDownAction"] },
@@ -142,5 +212,104 @@
     { "before": ["<leader>", "c", "a"], "commands": ["editor.action.quickFix"] },
     { "before": ["<leader>", "g", "s"], "commands": ["git.stageSelectedRanges"] },
     { "before": ["<leader>", "g", "r"], "commands": ["git.revertSelectedRanges"] }
-  ]
+  ],
+
+  // =========================================================================
+  // Editor -- mirrors lua/core/options.lua
+  // =========================================================================
+  "editor.lineNumbers": "relative",       // opt.relativenumber
+  "editor.cursorSurroundingLines": 12,    // opt.scrolloff = 12
+  "editor.tabSize": 4,                    // opt.tabstop / shiftwidth
+  "editor.insertSpaces": true,            // opt.expandtab
+  "editor.wordWrap": "off",               // opt.wrap = false
+  "editor.renderWhitespace": "boundary",  // opt.list + listchars
+  "editor.renderLineHighlight": "all",    // opt.cursorline
+  "editor.scrollBeyondLastLine": false,
+  "editor.minimap.enabled": false,
+  "search.smartCase": true,               // opt.ignorecase + opt.smartcase
+  "files.trimTrailingWhitespace": true,   // autocmds.lua trim_whitespace
+  "files.insertFinalNewline": true,
+  "files.restoreUndoStack": true,         // opt.undofile
+
+  // autocmds.lua exempts markdown from whitespace trimming (trailing spaces
+  // are a hard line break there).
+  "[markdown]": {
+    "files.trimTrailingWhitespace": false,
+    "editor.tabSize": 2
+  },
+
+  // =========================================================================
+  // Two-space indent for web languages -- mirrors the two_space_indent
+  // autocmd in lua/core/autocmds.lua
+  // =========================================================================
+  "[javascript]":      { "editor.tabSize": 2 },
+  "[javascriptreact]": { "editor.tabSize": 2 },
+  "[typescript]":      { "editor.tabSize": 2 },
+  "[typescriptreact]": { "editor.tabSize": 2 },
+  "[html]":            { "editor.tabSize": 2 },
+  "[css]":             { "editor.tabSize": 2 },
+  "[scss]":            { "editor.tabSize": 2 },
+  "[less]":            { "editor.tabSize": 2 },
+  "[json]":            { "editor.tabSize": 2 },
+  "[jsonc]":           { "editor.tabSize": 2 },
+  "[yaml]":            { "editor.tabSize": 2 },
+
+  // =========================================================================
+  // TypeScript inlay hints -- the same tsserver options as the `ts_inlay`
+  // table in lua/plugins/lsp.lua, so hover and ghost-text types match.
+  // <leader>th toggles them.
+  // =========================================================================
+  "typescript.inlayHints.variableTypes.enabled": true,
+  "typescript.inlayHints.parameterNames.enabled": "literal",
+  "typescript.inlayHints.parameterNames.suppressWhenArgumentMatchesName": true,
+  "typescript.inlayHints.parameterTypes.enabled": true,
+  "typescript.inlayHints.propertyDeclarationTypes.enabled": true,
+  "typescript.inlayHints.functionLikeReturnTypes.enabled": true,
+  "typescript.inlayHints.enumMemberValues.enabled": true,
+  "javascript.inlayHints.variableTypes.enabled": true,
+  "javascript.inlayHints.parameterNames.enabled": "literal",
+  "javascript.inlayHints.parameterTypes.enabled": true,
+  "javascript.inlayHints.propertyDeclarationTypes.enabled": true,
+  "javascript.inlayHints.functionLikeReturnTypes.enabled": true,
+  "javascript.inlayHints.enumMemberValues.enabled": true,
+
+  // Use the workspace's own TypeScript, matching what ts_ls resolves to.
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+
+  // =========================================================================
+  // Format on save -- mirrors conform.nvim (lua/plugins/formatting.lua)
+  // =========================================================================
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "[lua]": { "editor.tabSize": 2, "editor.defaultFormatter": "JohnnyMorganz.stylua" },
+  "[cpp]": { "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd" },
+  "[c]":   { "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd" },
+
+  // ESLint / oxlint fix-on-save -- the equivalent of the LspAttach BufWritePre
+  // hooks in lua/plugins/lsp.lua.
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit",
+    "source.fixAll.oxc": "explicit"
+  },
+
+  // =========================================================================
+  // Theme -- gruvbox-material has an official VS Code port
+  // =========================================================================
+  "workbench.colorTheme": "Gruvbox Material Dark",
+
+  // =========================================================================
+  // clangd -- the same flags as lua/plugins/lsp.lua. Requires the clangd
+  // extension AND disabling Microsoft's C/C++ IntelliSense so they don't both
+  // index the project.
+  // =========================================================================
+  "clangd.arguments": [
+    "--background-index",
+    "--clang-tidy",
+    "--header-insertion=iwyu",
+    "--completion-style=detailed",
+    "--function-arg-placeholders",
+    "--fallback-style=llvm"
+  ],
+  "C_Cpp.intelliSenseEngine": "disabled"
 }

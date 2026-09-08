@@ -51,3 +51,13 @@ opt.inccommand = "split"
 vim.schedule(function()
   opt.clipboard = "unnamedplus"
 end)
+
+-- Language providers. These exist so Neovim can run plugins written in Perl,
+-- Ruby, Python or Node -- none of which this config uses. Left enabled, Neovim
+-- probes for each interpreter at startup and :checkhealth nags about the ones
+-- it can't find. LSP servers installed via npm are unaffected: they talk over
+-- the LSP protocol, not the Node provider.
+vim.g.loaded_node_provider = 0
+vim.g.loaded_perl_provider = 0
+vim.g.loaded_python3_provider = 0
+vim.g.loaded_ruby_provider = 0

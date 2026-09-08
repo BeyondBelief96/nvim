@@ -133,7 +133,12 @@ lua/plugins/
 bootstrap.sh              one-shot installer for Linux / macOS / WSL2
 bootstrap.ps1             one-shot installer for native Windows
 templates/                .clang-format, CMakeLists.txt, .clangd starters
-vscode/                   settings + keybindings for using this config in VS Code
+vscode/                   VS Code setup -- keybinding parity without Neovim
+  settings.vscodevim.json   self-contained settings for the VSCodeVim extension
+  keybindings.vscodevim.json  its companion keybindings
+  settings.json             settings for the vscode-neovim extension instead
+  keybindings.json          its companion keybindings
+  README.md                 which to pick, setup, and the full keymap diff
 legacy/init.vim           the original vimscript config, for reference
 ```
 
@@ -327,16 +332,28 @@ on every `#include`. Pick one:
 
 ## VS Code
 
-If you use VS Code at work, this config comes with you. The
-[`vscode-neovim`](https://marketplace.visualstudio.com/items?itemName=asvetliakov.vscode-neovim)
-extension runs a real Neovim inside VS Code and loads this repo: `init.lua`
-detects it via `vim.g.vscode`, keeps `core/options.lua` and `core/keymaps.lua`,
-skips everything in `lua/plugins/`, and `core/vscode.lua` re-points the
-Neovim-UI keymaps at the equivalent VS Code commands. VS Code keeps `Ctrl+P`,
-`Ctrl+Shift+P`, `Ctrl+F` and the rest of its defaults.
+If you prefer VS Code's GUI but want these motions and leader keys, the
+`vscode/` directory has you covered two ways:
 
-Setup, the full keymap diff, and a VSCodeVim fallback for machines where you
-can't install `nvim`: **[`vscode/README.md`](vscode/README.md)**.
+- **[VSCodeVim](https://marketplace.visualstudio.com/items?itemName=vscodevim.vim)**
+  — paste in `vscode/settings.vscodevim.json` and
+  `vscode/keybindings.vscodevim.json` and you're done. No `nvim` binary, no
+  cloning this repo anywhere special. The keymaps are a hand-maintained mirror
+  of `core/keymaps.lua` + `core/vscode.lua`, so changing one means changing the
+  other.
+
+- **[vscode-neovim](https://marketplace.visualstudio.com/items?itemName=asvetliakov.vscode-neovim)**
+  — runs a real Neovim inside VS Code and loads *this repo*: `init.lua` detects
+  it via `vim.g.vscode`, keeps `core/options.lua` and `core/keymaps.lua`, skips
+  everything in `lua/plugins/`, and `core/vscode.lua` re-points the Neovim-UI
+  keymaps at the equivalent VS Code commands. One source of truth, no drift.
+
+Either way VS Code keeps `Ctrl+P`, `Ctrl+Shift+P`, `Ctrl+F` and the rest of its
+defaults, and owns the IDE layer — LSP, completion, file tree, git gutter,
+debugger.
+
+Which to pick, setup, and the full keymap diff:
+**[`vscode/README.md`](vscode/README.md)**.
 
 ## Customising
 

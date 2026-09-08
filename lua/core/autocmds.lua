@@ -29,7 +29,7 @@ vim.api.nvim_create_autocmd("FileType", {
 vim.api.nvim_create_autocmd("BufWritePre", {
   group = augroup("trim_whitespace"),
   callback = function(ev)
-    if vim.bo[ev.buf].filetype == "markdown" then
+    if vim.bo[ev.buf].filetype == "markdown" or not vim.bo[ev.buf].modifiable then
       return
     end
     local view = vim.fn.winsaveview()

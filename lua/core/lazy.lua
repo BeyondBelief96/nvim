@@ -31,6 +31,11 @@ require("lazy").setup({
 
   ui = { border = "rounded" },
 
+  -- No plugin here needs luarocks, so don't let lazy.nvim install its private
+  -- Lua 5.1 + luarocks toolchain (hererocks) just to satisfy the check. Without
+  -- this, :checkhealth reports a missing luarocks that nothing actually wants.
+  rocks = { hererocks = false, enabled = false },
+
   performance = {
     rtp = {
       -- Disable built-in plugins we replace or don't use. Shaves startup time.
