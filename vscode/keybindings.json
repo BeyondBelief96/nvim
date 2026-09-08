@@ -1,78 +1,35 @@
-// VS Code keybindings for use with the `vscode-neovim` extension.
+// Paste into: Ctrl+Shift+P -> "Preferences: Open Keyboard Shortcuts (JSON)"
 //
-// Merge into your VS Code keybindings (Ctrl+Shift+P ->
-// "Preferences: Open Keyboard Shortcuts (JSON)").
-//
-// Most Ctrl-key routing is handled by `vscode-neovim.ctrlKeysForNormalMode`
-// in settings.json. This file is only for the cases those lists cannot
-// express: multi-key chords, `when`-clause conditions, and unbinding.
+// Only the things vim.handleKeys in settings.json cannot express.
 [
-  // -------------------------------------------------------------------------
-  // Escape: leave insert mode AND dismiss whatever popup is open. Without the
-  // suggest-widget clause, Esc in insert mode with IntelliSense showing will
-  // close the popup but leave you in insert mode -- a constant papercut.
-  // -------------------------------------------------------------------------
+  // Esc leaves insert mode AND dismisses IntelliSense in one press.
   {
     "key": "escape",
-    "command": "vscode-neovim.escape",
-    "when": "editorTextFocus && neovim.init && !suggestWidgetVisible && !parameterHintsVisible && !inSnippetMode"
+    "command": "runCommands",
+    "args": { "commands": ["hideSuggestWidget", "extension.vim_escape"] },
+    "when": "editorTextFocus && vim.active && suggestWidgetVisible && vim.mode == 'Insert'"
   },
 
-  // -------------------------------------------------------------------------
-  // Ctrl+D / Ctrl+U scroll in Vim rather than VS Code's multi-cursor.
-  // Declared here as well as in ctrlKeysForNormalMode so the `when` clause
-  // keeps VS Code's Ctrl+D working everywhere outside the editor.
-  // -------------------------------------------------------------------------
-  {
-    "key": "ctrl+d",
-    "command": "vscode-neovim.send",
-    "args": "<C-d>",
-    "when": "editorTextFocus && neovim.mode != insert"
-  },
-  {
-    "key": "ctrl+u",
-    "command": "vscode-neovim.send",
-    "args": "<C-u>",
-    "when": "editorTextFocus && neovim.mode != insert"
-  },
-
-  // -------------------------------------------------------------------------
-  // Jump list. Ctrl+O and Ctrl+I are how you get back after `gd`, and VS Code
-  // has no equally good default for it.
-  // -------------------------------------------------------------------------
-  {
-    "key": "ctrl+o",
-    "command": "vscode-neovim.send",
-    "args": "<C-o>",
-    "when": "editorTextFocus && neovim.mode != insert"
-  },
-  {
-    "key": "ctrl+i",
-    "command": "vscode-neovim.send",
-    "args": "<C-i>",
-    "when": "editorTextFocus && neovim.mode != insert"
-  },
-
-  // -------------------------------------------------------------------------
-  // Explicitly hand the famous VS Code chords back, in case a future version
-  // of the extension claims them. A leading "-" removes a binding.
-  // -------------------------------------------------------------------------
-  { "key": "ctrl+p", "command": "-vscode-neovim.send", "when": "editorTextFocus" },
-  { "key": "ctrl+f", "command": "-vscode-neovim.send", "when": "editorTextFocus" },
-  { "key": "ctrl+b", "command": "-vscode-neovim.send", "when": "editorTextFocus" },
-  { "key": "ctrl+n", "command": "-vscode-neovim.send", "when": "editorTextFocus" },
-
-  // -------------------------------------------------------------------------
-  // j/k navigate the file-explorer tree like a Vim list, and Enter opens.
-  // Not Neovim -- these are plain VS Code bindings scoped to the tree.
-  // -------------------------------------------------------------------------
+  // j/k/l/h navigate the file tree, search results and SCM view like a Vim list.
   { "key": "j", "command": "list.focusDown", "when": "listFocus && !inputFocus" },
-  { "key": "k", "command": "list.focusUp",   "when": "listFocus && !inputFocus" },
-  { "key": "l", "command": "list.expand",    "when": "listFocus && !inputFocus" },
-  { "key": "h", "command": "list.collapse",  "when": "listFocus && !inputFocus" },
+  { "key": "k", "command": "list.focusUp", "when": "listFocus && !inputFocus" },
+  { "key": "l", "command": "list.expand", "when": "listFocus && !inputFocus" },
+  { "key": "h", "command": "list.collapse", "when": "listFocus && !inputFocus" },
 
-  // Ctrl+J / Ctrl+K move the selection in Quick Open, matching the Telescope
-  // mappings in lua/plugins/telescope.lua.
+  // Getting back to the editor. Vim keymaps only fire inside an editor, so the
+  // return leg of every hop lives here.
+  //   Esc          file tree -> editor
+  //   Ctrl+;       tree, search results, SCM or terminal -> editor
+  //   Ctrl+h/l     step across panes from the tree, mirroring the editor maps
+  // Ctrl+; is deliberate: Ctrl+h is backspace and Ctrl+l is clear-screen to a
+  // shell, so neither is safe to steal while the terminal has focus.
+  { "key": "escape", "command": "workbench.action.focusActiveEditorGroup", "when": "filesExplorerFocus && !inputFocus" },
+  { "key": "ctrl+;", "command": "workbench.action.focusActiveEditorGroup", "when": "listFocus && !inputFocus" },
+  { "key": "ctrl+;", "command": "workbench.action.focusActiveEditorGroup", "when": "terminalFocus" },
+  { "key": "ctrl+h", "command": "workbench.action.navigateLeft", "when": "listFocus && !inputFocus" },
+  { "key": "ctrl+l", "command": "workbench.action.navigateRight", "when": "listFocus && !inputFocus" },
+
+  // Ctrl+J / Ctrl+K move the selection in Quick Open and the suggest widget.
   { "key": "ctrl+j", "command": "workbench.action.quickOpenSelectNext", "when": "inQuickOpen" },
   { "key": "ctrl+k", "command": "workbench.action.quickOpenSelectPrevious", "when": "inQuickOpen" },
   { "key": "ctrl+j", "command": "selectNextSuggestion", "when": "suggestWidgetVisible" },
